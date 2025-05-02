@@ -14,11 +14,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
 @RestController
+@Authenticate
 @RequestMapping("/pdf")
 public class PdfUploadController {
 
@@ -31,7 +43,6 @@ public class PdfUploadController {
         this.fileStorageService = fileStorageService;
     }
 
-    @Authenticate
     @PostMapping("/upload")
     public ResponseEntity<String> uploadPdf(
             @RequestParam("file") MultipartFile file, HttpServletRequest request) throws IOException {
@@ -46,14 +57,11 @@ public class PdfUploadController {
 
         try {
             HashMap<String, String> user = (HashMap<String, String>)request.getAttribute("user");
-            // Generate a UUID for the file
+
             String uuid = fileStorageService.generateUuid();
 
-            // Store the file in the filesystem
             String filePath = fileStorageService.storeFile(file, uuid);
 
-
-            // Store metadata in the database
             PdfDocument document = new PdfDocument();
             document.setFilename(file.getOriginalFilename());
             document.setUuid(uuid);
@@ -63,9 +71,44 @@ public class PdfUploadController {
             document.setUploadDate(LocalDateTime.now());
 
             repository.save(document);
+            String boundary = UUID.randomUUID().toString();
+            byte[] fileBytes = file.getBytes();
+            String filename = file.getOriginalFilename();
 
-            return ResponseEntity.ok("PDF uploaded successfully with UUID: " + uuid);
-        } catch (Exception e) {
+            List<byte[]> byteSections = new ArrayList<>();
+
+            byteSections.add(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+            byteSections.add(("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n").getBytes(StandardCharsets.UTF_8));
+            byteSections.add(("Content-Type: application/pdf\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            byteSections.add(fileBytes);
+            byteSections.add("\r\n".getBytes(StandardCharsets.UTF_8));
+            byteSections.add(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+
+            int totalLength = byteSections.stream().mapToInt(b -> b.length).sum();
+            byte[] finalBody = new byte[totalLength];
+            int pos = 0;
+            for (byte[] part : byteSections) {
+                System.arraycopy(part, 0, finalBody, pos, part.length);
+                pos += part.length;
+            }
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:5000/predict"))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(BodyPublishers.ofByteArray(finalBody))
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            return ResponseEntity.status(response.statusCode()).body(response.body());
+
+        }
+        catch (ConnectException e)
+        {
+            return ResponseEntity.internalServerError().body("AI PDF Scanner API issue!");
+        }
+        catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body("Error uploading file: " + e.getMessage());
         }
@@ -74,14 +117,11 @@ public class PdfUploadController {
     @GetMapping("/download/{uuid}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String uuid) {
         try {
-            // Find the document in the database
             PdfDocument document = repository.findByUuid(uuid)
                     .orElseThrow(() -> new RuntimeException("File not found with UUID: " + uuid));
 
-            // Read the file from the filesystem
             byte[] fileData = fileStorageService.readFile(document.getFilePath());
 
-            // Create a resource from the file data
             ByteArrayResource resource = new ByteArrayResource(fileData);
 
             return ResponseEntity.ok()
