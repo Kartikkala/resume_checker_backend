@@ -5,11 +5,8 @@ import com.kartik.resumeChecker.model.PdfDocument;
 import com.kartik.resumeChecker.repository.PdfDocumentRepository;
 import com.kartik.resumeChecker.service.FileStorageService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -111,55 +108,6 @@ public class PdfUploadController {
         catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body("Error uploading file: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/download/{uuid}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String uuid) {
-        try {
-            PdfDocument document = repository.findByUuid(uuid)
-                    .orElseThrow(() -> new RuntimeException("File not found with UUID: " + uuid));
-
-            byte[] fileData = fileStorageService.readFile(document.getFilePath());
-
-            ByteArrayResource resource = new ByteArrayResource(fileData);
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(document.getContentType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + document.getFilename() + "\"")
-                    .body(resource);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/info/{uuid}")
-    public ResponseEntity<?> getFileInfo(@PathVariable String uuid) {
-        return repository.findByUuid(uuid)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{uuid}")
-    public ResponseEntity<String> deleteFile(@PathVariable String uuid) {
-        try {
-            PdfDocument document = repository.findByUuid(uuid)
-                    .orElseThrow(() -> new RuntimeException("File not found with UUID: " + uuid));
-
-            // Delete the file from the filesystem
-            boolean deleted = fileStorageService.deleteFile(document.getFilePath());
-
-            if (deleted) {
-                // Delete the metadata from the database
-                repository.delete(document);
-                return ResponseEntity.ok("File deleted successfully");
-            } else {
-                return ResponseEntity.internalServerError().body("Could not delete file from filesystem");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Error deleting file: " + e.getMessage());
         }
     }
 }

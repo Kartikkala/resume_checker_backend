@@ -30,7 +30,6 @@ public class FileStorageService {
     public String storeFile(MultipartFile file, String uuid) throws IOException {
         String fileName = uuid + getFileExtension(file.getOriginalFilename());
 
-        // Copy file to the target location
         Path targetLocation = this.fileStorageLocation.resolve(fileName);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 

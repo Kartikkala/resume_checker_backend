@@ -9,9 +9,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 @Service
 public class AuthService {
     private final UserRepository userRepository;

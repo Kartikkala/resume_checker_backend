@@ -9,19 +9,17 @@ public class PdfDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String filename;  // Original filename
+    private String filename;
 
-    private String uuid;      // Generated UUID used to store on filesystem
+    private String uuid;
 
-    private String userEmail; // User's email for reference
+    private String userEmail;
 
     private String contentType;
 
-    private String filePath;  // Path to the file in the filesystem
+    private String filePath;
 
     private LocalDateTime uploadDate;
-
-    // No binary data stored in the database
 
     public Long getId() {
         return id;
