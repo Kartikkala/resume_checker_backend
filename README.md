@@ -88,19 +88,6 @@ spring.jpa.show-sql=true
 
 ---
 
-## 🔁 API Overview
-
-### `POST /api/parse-resume`
-Uploads and extracts plain text from a `.pdf` resume.
-
-### `POST /api/score`
-Accepts resume text and job description text. Returns ATS score and summary.
-
-### `GET /api/score-breakdown/{id}`
-Provides detailed breakdown of scoring — keyword matches, sections matched, etc.
-
----
-
 ## 🧠 About the AI Model
 
 The resume scoring uses a **TF-IDF-based similarity model** to compute how well a resume aligns with a given job description. The model is run **locally** and integrated into the backend scoring service via direct method calls.
@@ -119,11 +106,11 @@ Backend Developer
 
 ## 🤝 Contributors
 
-| Name           | Role               |
-|----------------|--------------------|
-| Kartik Kala    | Backend Development |
-| [Friend 1]     | Frontend/UI         |
-| [Friend 2]     | Machine Learning    |
+| Name         | Role                | GitHub |
+|--------------|---------------------|--------|
+| Kartik Kala  | Backend Developer   | [@Kartikkala](https://github.com/Kartikkala) |
+| Paras Kamdar     | Frontend Developer  | [@Paraskamdar700](https://github.com/paraskamdar700) |
+| Narra Suryakoushik Reddy     | ML Engineer         | [@Koushikscripts](https://github.com/koushikscripts) |
 
 ---
 
