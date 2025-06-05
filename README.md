@@ -76,10 +76,10 @@ spring.servlet.multipart.max-file-size=2MB
 spring.servlet.multipart.max-request-size=2MB
 
 # PostgreSQL Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/resumeChecker
-spring.datasource.username=postgres
-spring.datasource.password=kartik12
-spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url=jdbc:postgresql://<IP_address>:<port_number (5432 for postgres)>/resumeChecker
+spring.datasource.username=<database_username>
+spring.datasource.password=<some_password>
+spring.datasource.driver-class-name=org.postgresql.Driver (For postgresql driver)
 
 # JPA Settings
 spring.jpa.hibernate.ddl-auto=update
